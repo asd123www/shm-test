@@ -5,6 +5,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <numa.h>
+#include <numaif.h>
+
+
 
 #define SHM_NAME "/my_shared_memory"
 #define SHM_SIZE (1L * 1024 * 1024 * 1024) // 1GB
@@ -28,6 +32,13 @@ int main() {
     if (shm_ptr == MAP_FAILED) {
         perror("mmap");
         exit(EXIT_FAILURE);
+    }
+
+    // Set the NUMA memory policy for the shared memory region
+    unsigned long nodemask = 1 << 0; // Bind to NUMA node 0
+    if (mbind(shm_ptr, SHM_SIZE, MPOL_BIND, &nodemask, sizeof(nodemask) * 8, 0) != 0) {
+        perror("mbind");
+        return 1;
     }
 
     // Initialize memory (optional)
